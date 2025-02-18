@@ -1,0 +1,45 @@
+from scapy.all import sniff, IP, TCP, UDP, DNS, DNSQR, Raw
+
+def process_packet(packet):
+    """Processes captured network packets and extracts useful details."""
+    
+    print("\n[+] Captured a Packet!")
+    
+    # Check for IP layer
+    if packet.haslayer(IP):
+        src_ip = packet[IP].src
+        dst_ip = packet[IP].dst
+        print(f"Source IP: {src_ip} --> Destination IP: {dst_ip}")
+
+    # Check for TCP packets
+    if packet.haslayer(TCP):
+        src_port = packet[TCP].sport
+        dst_port = packet[TCP].dport
+        print(f"TCP Packet | Source Port: {src_port}, Destination Port: {dst_port}")
+        
+        # If raw data exists, extract payload
+        if packet.haslayer(Raw):
+            print(f"Raw Data: {packet[Raw].load.decode(errors='ignore')}")
+
+    # Check for UDP packets
+    elif packet.haslayer(UDP):
+        src_port = packet[UDP].sport
+        dst_port = packet[UDP].dport
+        print(f"UDP Packet | Source Port: {src_port}, Destination Port: {dst_port}")
+
+    # Check for DNS packets
+    elif packet.haslayer(DNS) and packet.haslayer(DNSQR):
+        queried_domain = packet[DNSQR].qname.decode()
+        print(f"DNS Query | Domain Requested: {queried_domain}")
+
+def start_sniffing(interface=None):
+    """Starts packet sniffing on a specific network interface or all interfaces."""
+    print("Starting network sniffer... Press Ctrl+C to stop.")
+
+    if interface:
+        sniff(prn=process_packet, iface=interface, store=False)
+    else:
+        sniff(prn=process_packet, store=False)  # Sniff on all available interfaces
+
+if __name__ == "__main__":
+    start_sniffing()
